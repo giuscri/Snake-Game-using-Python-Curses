@@ -2,6 +2,9 @@ import random
 import curses
 import time
 
+SPEED = 30
+MAX_SPEED = 100
+
 #initialize screen
 sc = curses.initscr()
 h, w = sc.getmaxyx()
@@ -12,12 +15,9 @@ curses.curs_set(0)
 
 # Initial Snake and Apple position
 snake_head = [10,15]
-snake_position = [[15,10],[14,10],[13,10]]
+snake_position = [snake_head]
 apple_position = [20,20]
 score = 0
-
-# display apple
-win.addch(apple_position[0], apple_position[1], curses.ACS_DIAMOND)
 
 prev_button_direction = 1
 button_direction = 1
@@ -41,12 +41,23 @@ def collision_with_self(snake_position):
     else:
         return 0
 
-a = []
-while True:
+def draw(snake_position, apple_position) -> None:
+    win.clear()
     win.border(0)
-    win.timeout(100)
 
-    next_key = win.getch()
+    win.addch(apple_position[0], apple_position[1], curses.ACS_DIAMOND)
+
+    for x,y in snake_position:
+        win.addch(x, y, '#')
+
+def ch() -> int:
+    win.timeout(MAX_SPEED - (SPEED%(MAX_SPEED+1)))
+    return win.getch()
+
+while True:
+    draw(snake_position, apple_position)
+
+    next_key = ch()
 
     if next_key == -1:
         key = key
@@ -80,17 +91,12 @@ while True:
     # Increase Snake length on eating apple
     if snake_head == apple_position:
         apple_position, score = collision_with_apple(score)
-        snake_position.insert(0, list(snake_head))
-        a.append(apple_position)
-        win.addch(apple_position[0], apple_position[1], curses.ACS_DIAMOND)
+        snake_position.insert(0, snake_head.copy())
 
     else:
-        snake_position.insert(0, list(snake_head))
+        snake_position.insert(0, snake_head.copy())
         last = snake_position.pop()
-        win.addch(last[0], last[1], ' ')
 
-    # display snake
-    win.addch(snake_position[0][0], snake_position[0][1], '#')
 
     # On collision kill the snake
     if collision_with_boundaries(snake_head) == 1 or collision_with_self(snake_position) == 1:
@@ -101,5 +107,4 @@ sc.addstr(10, 30, 'Your Score is:  '+str(score))
 sc.refresh()
 time.sleep(2)
 curses.endwin()
-print(a)
 print(w,h)
